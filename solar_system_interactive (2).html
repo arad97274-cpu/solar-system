@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>شبیه‌ساز تعاملی منظومه شمسی</title>
+<style>
+:root{--cyan:#56d8ff;--panel:rgba(3,15,38,.88);--line:rgba(76,178,255,.35)}
+*{box-sizing:border-box}body{margin:0;background:#020714;color:#eef7ff;font-family:Tahoma,Arial,sans-serif;overflow:hidden}
+#app{height:100dvh;display:grid;grid-template-rows:auto 1fr auto;position:relative;background:radial-gradient(ellipse at 50% 45%,#09214b 0,#030b1d 48%,#01040d 100%)}
+header{z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;background:rgba(2,10,27,.9);border-bottom:1px solid var(--line)}
+h1{font-size:clamp(16px,2vw,25px);margin:0;color:#eaf7ff}header p{margin:5px 0 0;color:#8ec8ef;font-size:12px}.tag{font-size:12px;color:#a6dfff;border:1px solid var(--line);border-radius:20px;padding:8px 12px;white-space:nowrap}
+#stage{position:relative;min-height:0}canvas{display:block;width:100%;height:100%;outline:none}.panel{position:absolute;top:14px;right:14px;width:min(285px,34vw);max-height:calc(100% - 28px);overflow:auto;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--panel);backdrop-filter:blur(10px);box-shadow:0 10px 40px #0008}
+.panel h2{font-size:20px;margin:0 0 12px;color:var(--cyan)}.fact{padding:9px 0;border-bottom:1px solid #183653}.fact b{display:block;color:#72cfff;font-size:12px;margin-bottom:5px}.fact span{font-size:13px;line-height:1.6}.desc{font-size:13px;line-height:1.8;color:#d1e8fa;margin-top:12px}
+.controls{position:absolute;left:14px;bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--panel);max-width:min(550px,calc(100% - 28px))}.btn{border:1px solid #2b75b7;background:#09274c;color:#e9f8ff;padding:9px 13px;border-radius:10px;cursor:pointer;font-family:inherit}.btn:hover,.btn.active{background:#075b94;border-color:#62d7ff}.speed{display:flex;align-items:center;gap:8px;font-size:12px;color:#bde7ff}.speed input{width:100px;accent-color:#25baff}
+footer{z-index:2;padding:10px 14px;background:rgba(2,10,27,.94);border-top:1px solid var(--line);display:flex;gap:8px;overflow-x:auto}.planetBtn{flex:0 0 auto;min-width:82px;padding:8px 10px;border:1px solid #17436b;border-radius:12px;background:#06162d;color:#eaf7ff;cursor:pointer;font-family:inherit}.planetBtn .dot{display:block;width:20px;height:20px;border-radius:50%;margin:0 auto 6px;box-shadow:0 0 14px currentColor}.planetBtn small{font-size:12px}.planetBtn.active{border-color:#5de0ff;background:#0a3156;box-shadow:0 0 14px #14aaff55}
+#hint{position:absolute;left:16px;top:14px;background:#03152be0;border:1px solid var(--line);padding:9px 12px;border-radius:12px;color:#b7e4ff;font-size:12px;pointer-events:none}
+#quiz{position:absolute;left:14px;top:14px;max-width:270px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;display:none;font-size:13px;line-height:1.7}#quiz button{margin:4px 2px}
+@media(max-width:650px){header{padding:10px}header .tag{display:none}.panel{top:10px;right:10px;width:190px;padding:10px}.panel h2{font-size:16px}.fact{padding:6px 0}.fact span,.desc{font-size:11px}.controls{left:10px;bottom:10px;padding:8px}.btn{padding:7px 9px;font-size:12px}#hint{top:auto;bottom:100px;left:10px;font-size:10px}}
+</style></head>
+<body><div id="app">
+<header><div><h1>☀️ شبیه‌ساز تعاملی منظومهٔ شمسی</h1><p>کشف، یادگیری و تجربهٔ حرکت سیاره‌ها</p></div><div class="tag">برای انتخاب سیاره، روی آن کلیک کنید</div></header>
+<div id="stage"><div id="hint">با ماوس بچرخانید • چرخ ماوس: بزرگ‌نمایی</div><canvas id="space"></canvas>
+<aside class="panel"><h2 id="planetName">زمین 🌍</h2><div class="fact"><b>فاصلهٔ میانگین از خورشید</b><span id="distance">۱۴۹٫۶ میلیون کیلومتر</span></div><div class="fact"><b>مدت گردش به دور خورشید</b><span id="year">۳۶۵ روز</span></div><div class="fact"><b>مدت چرخش به دور خود</b><span id="day">۲۴ ساعت</span></div><div class="fact"><b>قطر تقریبی</b><span id="diameter">۱۲٬۷۴۲ کیلومتر</span></div><p class="desc" id="description">زمین تنها سیارهٔ شناخته‌شده‌ای است که روی آن حیات وجود دارد. آب مایع و جوّ مناسب از ویژگی‌های مهم آن هستند.</p></aside>
+<div class="controls"><button class="btn" id="play">⏸ توقف</button><button class="btn" id="reset">↺ نمای آغازین</button><label class="speed">سرعت حرکت <input id="speed" type="range" min="0" max="3" step="0.25" value="1"><span id="speedLabel">۱×</span></label><button class="btn" id="quizToggle">❓ آزمون کوتاه</button></div>
+<div id="quiz"><b>کدام سیاره بزرگ‌ترین سیارهٔ منظومهٔ شمسی است؟</b><div><button class="btn" data-answer="no">زمین</button><button class="btn" data-answer="yes">مشتری</button><button class="btn" data-answer="no">نپتون</button></div><span id="quizResult"></span></div>
+</div>
+<footer id="planetList"></footer></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const data=[
+{name:'عطارد',emoji:'☿',color:0x9b9389,r:0.38,orbit:5.3,period:88,day:'۵۹ روز',dist:'۵۷٫۹ میلیون کیلومتر',diam:'۴٬۸۷۹ کیلومتر',desc:'نزدیک‌ترین سیاره به خورشید و کوچک‌ترین سیارهٔ منظومهٔ شمسی است. جوّ بسیار رقیقی دارد.'},
+{name:'زهره',emoji:'♀',color:0xe4b15c,r:0.62,orbit:7.3,period:225,day:'۲۴۳ روز',dist:'۱۰۸٫۲ میلیون کیلومتر',diam:'۱۲٬۱۰۴ کیلومتر',desc:'زهره جوّی بسیار چگال دارد و به‌سبب اثر گلخانه‌ای، داغ‌ترین سیارهٔ منظومهٔ شمسی است.'},
+{name:'زمین',emoji:'🌍',color:0x3189ff,r:0.68,orbit:9.5,period:365,day:'۲۴ ساعت',dist:'۱۴۹٫۶ میلیون کیلومتر',diam:'۱۲٬۷۴۲ کیلومتر',desc:'زمین تنها سیارهٔ شناخته‌شده‌ای است که روی آن حیات وجود دارد. آب مایع و جوّ مناسب از ویژگی‌های مهم آن هستند.'},
+{name:'مریخ',emoji:'♂',color:0xd95d3f,r:0.52,orbit:11.8,period:687,day:'۲۴ ساعت و ۳۷ دقیقه',dist:'۲۲۷٫۹ میلیون کیلومتر',diam:'۶٬۷۷۹ کیلومتر',desc:'مریخ به‌دلیل رنگ سرخ خود سیارهٔ سرخ نامیده می‌شود. دانشمندان نشانه‌هایی از آب گذشته در آن یافته‌اند.'},
+{name:'مشتری',emoji:'♃',color:0xd7a879,r:1.45,orbit:16.1,period:4333,day:'حدود ۱۰ ساعت',dist:'۷۷۸٫۶ میلیون کیلومتر',diam:'۱۳۹٬۸۲۰ کیلومتر',desc:'مشتری بزرگ‌ترین سیاره است و لکهٔ سرخ بزرگ آن توفانی عظیم و دیرپا به‌شمار می‌رود.'},
+{name:'زحل',emoji:'♄',color:0xdcc58b,r:1.18,orbit:20.4,period:10759,day:'حدود ۱۰٫۷ ساعت',dist:'۱٫۴۳ میلیارد کیلومتر',diam:'۱۱۶٬۴۶۰ کیلومتر',desc:'زحل به حلقه‌های چشمگیر خود معروف است. حلقه‌ها از یخ، سنگ و غبار تشکیل شده‌اند.'},
+{name:'اورانوس',emoji:'♅',color:0x74dce5,r:0.88,orbit:24.2,period:30687,day:'حدود ۱۷ ساعت',dist:'۲٫۸۷ میلیارد کیلومتر',diam:'۵۰٬۷۲۴ کیلومتر',desc:'اورانوس غولی یخی با رنگ آبی‌ـ‌سبز است و محور چرخشش به‌شدت کج شده است.'},
+{name:'نپتون',emoji:'♆',color:0x3157ed,r:0.86,orbit:28,period:60190,day:'حدود ۱۶ ساعت',dist:'۴٫۵ میلیارد کیلومتر',diam:'۴۹٬۲۴۴ کیلومتر',desc:'نپتون دورترین سیاره از خورشید است و بادهای بسیار شدیدی در جوّ آن می‌وزند.'}
+];
+const canvas=document.querySelector('#space'), stage=document.querySelector('#stage');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(stage.clientWidth,stage.clientHeight,false);renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x020714,0.0035);
+const camera=new THREE.PerspectiveCamera(48,stage.clientWidth/stage.clientHeight,0.1,300);camera.position.set(0,35,49);camera.lookAt(0,0,0);
+scene.add(new THREE.AmbientLight(0x9bbdff,1.25));const sunLight=new THREE.PointLight(0xffd18a,260,180,1.5);scene.add(sunLight);
+const sun=new THREE.Mesh(new THREE.SphereGeometry(2.4,48,48),new THREE.MeshBasicMaterial({color:0xffb52e}));scene.add(sun);const glow=new THREE.Mesh(new THREE.SphereGeometry(3.0,32,32),new THREE.MeshBasicMaterial({color:0xff8a18,transparent:true,opacity:.16,side:THREE.BackSide}));sun.add(glow);
+const stars=new THREE.BufferGeometry(), starPositions=[];for(let i=0;i<1700;i++){starPositions.push((Math.random()-.5)*180,(Math.random()-.5)*100,(Math.random()-.5)*180)}stars.setAttribute('position',new THREE.Float32BufferAttribute(starPositions,3));scene.add(new THREE.Points(stars,new THREE.PointsMaterial({color:0xb9d9ff,size:.12,transparent:true,opacity:.8})));
+const objects=[];const orbitMaterial=new THREE.LineBasicMaterial({color:0x2874ba,transparent:true,opacity:.42});
+for(let i=0;i<data.length;i++){const d=data[i];const pts=[];for(let j=0;j<=240;j++){const a=j/240*Math.PI*2;pts.push(new THREE.Vector3(Math.cos(a)*d.orbit,0,Math.sin(a)*d.orbit))}const line=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),orbitMaterial);scene.add(line);
+ const mat=new THREE.MeshStandardMaterial({color:d.color,roughness:.82,metalness:.02,emissive:d.color,emissiveIntensity:.045});const mesh=new THREE.Mesh(new THREE.SphereGeometry(d.r,36,28),mat);scene.add(mesh);if(d.name==='زحل'){const ring=new THREE.Mesh(new THREE.RingGeometry(1.42,2.15,80),new THREE.MeshStandardMaterial({color:0xcdbb91,side:THREE.DoubleSide,transparent:true,opacity:.82,roughness:1}));ring.rotation.x=Math.PI/2.35;mesh.add(ring)}objects.push({d,mesh,line,angle:i*.72});}
+// Earth-like blue/green patches and atmospheric glows for visual appeal
+const earth=objects.find(o=>o.d.name==='زمین');if(earth){const cloud=new THREE.Mesh(new THREE.SphereGeometry(.72,32,24),new THREE.MeshBasicMaterial({color:0x75e9ff,transparent:true,opacity:.08,side:THREE.BackSide}));earth.mesh.add(cloud)}
+const list=document.querySelector('#planetList');let selected=2,playing=true,speed=1;const buttons=[];
+data.forEach((d,i)=>{const b=document.createElement('button');b.className='planetBtn'+(i===selected?' active':'');b.innerHTML=`<span class="dot" style="background:#${d.color.toString(16).padStart(6,'0')};color:#${d.color.toString(16).padStart(6,'0')}"></span><small>${d.name}</small>`;b.onclick=()=>selectPlanet(i);list.appendChild(b);buttons.push(b)});
+function selectPlanet(i){selected=i;const d=data[i];document.querySelector('#planetName').textContent=d.name+' '+d.emoji;document.querySelector('#distance').textContent=d.dist;document.querySelector('#year').textContent=d.period.toLocaleString('fa-IR')+' روز';document.querySelector('#day').textContent=d.day;document.querySelector('#diameter').textContent=d.diam;document.querySelector('#description').textContent=d.desc;buttons.forEach((b,j)=>b.classList.toggle('active',i===j));objects.forEach((o,j)=>o.mesh.scale.setScalar(j===i?1.12:1));}
+selectPlanet(selected);
+document.querySelector('#play').onclick=()=>{playing=!playing;document.querySelector('#play').textContent=playing?'⏸ توقف':'▶ ادامه'};
+document.querySelector('#reset').onclick=()=>{camera.position.set(0,35,49);camera.lookAt(0,0,0);objects.forEach((o,i)=>o.angle=i*.72)};
+document.querySelector('#speed').oninput=e=>{speed=+e.target.value;document.querySelector('#speedLabel').textContent=speed.toLocaleString('fa-IR')+'×'};
+document.querySelector('#quizToggle').onclick=()=>{const q=document.querySelector('#quiz');q.style.display=q.style.display==='block'?'none':'block'};
+document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>{document.querySelector('#quizResult').textContent=b.dataset.answer==='yes'?'آفرین! مشتری بزرگ‌ترین سیاره است.':'دوباره تلاش کنید؛ به اندازهٔ سیاره‌ها فکر کنید.'});
+// Drag to orbit the camera; wheel zoom; click a planet to select it.
+let down=false,lastX=0,lastY=0,theta=0,phi=.78,dist=60;const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();canvas.addEventListener('pointerdown',e=>{down=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!down)return;theta-=(e.clientX-lastX)*.006;phi=Math.max(.15,Math.min(1.45,phi+(e.clientY-lastY)*.004));lastX=e.clientX;lastY=e.clientY;updateCamera()});canvas.addEventListener('pointerup',e=>{down=false;pointer.x=(e.clientX/canvas.clientWidth)*2-1;pointer.y=-(e.clientY/canvas.clientHeight)*2+1;raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(objects.map(o=>o.mesh),true)[0];if(hit){let node=hit.object;while(node&&!objects.some(o=>o.mesh===node))node=node.parent;const idx=objects.findIndex(o=>o.mesh===node);if(idx>=0)selectPlanet(idx)}});canvas.addEventListener('wheel',e=>{dist=Math.max(25,Math.min(100,dist+e.deltaY*.035));updateCamera()},{passive:true});function updateCamera(){camera.position.set(Math.sin(theta)*dist*Math.sin(phi),Math.cos(phi)*dist,Math.cos(theta)*dist*Math.sin(phi));camera.lookAt(0,0,0)}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(stage);
+let last=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min((t-last)/1000||0,.05);last=t;if(playing){sun.rotation.y+=dt*.12;objects.forEach((o,i)=>{o.angle+=dt*speed*(.65/(Math.sqrt(o.d.orbit)));o.mesh.position.set(Math.cos(o.angle)*o.d.orbit,Math.sin(o.angle*.65+i)*.12,Math.sin(o.angle)*o.d.orbit);o.mesh.rotation.y+=dt*.35})}renderer.render(scene,camera)}animate(0);
+</script></body></html>
