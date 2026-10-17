@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>آزمایش سطح شیب‌دار</title>
+<style>
+body{font-family:Tahoma,Arial;background:#edf5ff;color:#183153;margin:0;padding:18px;text-align:center}
+main{max-width:650px;margin:auto;background:white;padding:18px;border-radius:16px;box-shadow:0 3px 14px #ccd7e5}
+h2{color:#1769aa}
+canvas{width:100%;max-width:500px;background:#f8fbff;border-radius:10px}
+label{display:block;text-align:right;margin-top:18px;font-weight:bold}
+input{width:100%;margin:10px 0}
+.result{background:#e7f5e9;padding:14px;border-radius:10px;line-height:2;margin-top:15px}
+button{padding:12px 22px;border:0;border-radius:8px;background:#1769aa;color:white;font-size:16px;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h2>آزمایش تعاملی سطح شیب‌دار</h2>
+<p>زاویه را تغییر دهید و شرط شروع لغزش جسم را بررسی کنید.</p>
+<canvas id="c" width="500" height="270"></canvas>
+<label>زاویهٔ سطح: <span id="av">20</span> درجه</label>
+<input id="a" type="range" min="0" max="60" value="20">
+<label>ضریب اصطکاک ایستایی μs: <span id="sv">0.40</span></label>
+<input id="s" type="range" min="0" max="100" value="40">
+<label>ضریب اصطکاک جنبشی μk: <span id="kv">0.25</span></label>
+<input id="k" type="range" min="0" max="100" value="25">
+<div class="result" id="r"></div>
+<button onclick="resetLab()">شروع دوباره</button>
+</main>
+<script>
+const a=document.getElementById('a'),s=document.getElementById('s'),k=document.getElementById('k');
+function draw(){
+const A=+a.value,S=+s.value/100,K=+k.value/100;
+const t=A*Math.PI/180;
+document.getElementById('av').textContent=A;
+document.getElementById('sv').textContent=S.toFixed(2);
+document.getElementById('kv').textContent=K.toFixed(2);
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+ctx.clearRect(0,0,500,270);
+ctx.fillStyle='#f8fbff';ctx.fillRect(0,0,500,270);
+const x1=55,y1=220,x2=440,y2=220-385*Math.tan(t);
+ctx.strokeStyle='#4679a8';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ctx.fillStyle='#e5a13a';
+ctx.save();ctx.translate(x1+190*Math.cos(t),y1-190*Math.sin(t));ctx.rotate(-t);
+ctx.fillRect(-22,-35,44,35);ctx.strokeStyle='#8a5a18';ctx.lineWidth=2;ctx.strokeRect(-22,-35,44,35);ctx.restore();
+ctx.fillStyle='#183153';ctx.font='16px Tahoma';ctx.fillText('θ = '+A+'°',65,250);
+const starts=Math.tan(t)>S;
+const acc=9.81*(Math.sin(t)-K*Math.cos(t));
+document.getElementById('r').innerHTML=
+'<b>وضعیت جسم:</b> '+(starts?'لغزش آغاز می‌شود':'جسم در حالت سکون می‌ماند')+'<br>'+
+'tan θ = '+Math.tan(t).toFixed(3)+'<br>'+
+'حداکثر اصطکاک ایستایی: μs cos θ = '+(S*Math.cos(t)).toFixed(3)+'<br>'+
+'شتاب در صورت لغزش: '+(starts?Math.max(0,acc).toFixed(2)+' m/s²':'۰ m/s²')+'<br>'+
+'<small>مدل ایده‌آل، بدون نیروی خارجی؛ شرط شروع لغزش: tan θ > μs</small>';
+}
+function resetLab(){a.value=20;s.value=40;k.value=25;draw()}
+[a,s,k].forEach(e=>e.addEventListener('input',draw));draw();
+</script>
+</body>
+</html>
