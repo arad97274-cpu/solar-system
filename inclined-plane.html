@@ -4,27 +4,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>آزمایش تعاملی سطح شیب‌دار</title>
+<title>آزمایش سطح شیب‌دار و نیروها</title>
 <style>
-body{font-family:Tahoma,Arial;background:#eef5ff;color:#17324d;text-align:center;margin:0;padding:16px}
-main{max-width:760px;margin:auto;background:white;padding:18px;border-radius:16px;box-shadow:0 3px 14px #bbc9da}
-h2{color:#1457a6}
-canvas{width:100%;max-width:680px;background:#f8fbff;border:1px solid #d5e2f2;border-radius:10px}
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;text-align:right;margin:16px 0}
-label{font-size:14px}
-input{width:100%;margin-top:8px}
-button{padding:10px 22px;background:#1769c2;color:white;border:0;border-radius:8px;font-size:16px}
-#result{background:#eaf4ff;padding:12px;border-radius:10px;line-height:2}
+body{font-family:Tahoma,Arial;background:#eef5ff;color:#17324d;text-align:center;padding:12px}
+main{max-width:760px;margin:auto;background:white;padding:14px;border-radius:14px}
+canvas{width:100%;height:auto;background:#f8fbff;border:1px solid #ccd9e8;border-radius:8px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:right;margin:16px 0}
+input{width:100%}
+button{background:#1769c2;color:white;border:0;border-radius:8px;padding:10px 20px}
+#result{line-height:2;background:#eaf4ff;padding:10px;border-radius:8px}
+.legend{line-height:2;font-size:14px}
 @media(max-width:480px){.controls{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <main>
-<h2>آزمایش سطح شیب‌دار</h2>
-<p>زاویه و اصطکاک را تغییر دهید و حرکت جسم را مشاهده کنید.</p>
+<h2>آزمایش تعاملی سطح شیب‌دار</h2>
+<p>زاویه و اصطکاک را تغییر دهید و نیروها و حرکت جسم را ببینید.</p>
 <canvas id="scene" width="680" height="360"></canvas>
+<div class="legend">
+<span style="color:#e53935">⬇ قرمز: وزن</span>　
+<span style="color:#16803c">⬆ سبز: نیروی عمودی سطح</span>　
+<span style="color:#1769c2">⬅ آبی: اصطکاک</span>
+</div>
 <div class="controls">
-<label>زاویه سطح: <b id="av">30</b> درجه
+<label>زاویه: <b id="av">30</b> درجه
 <input id="angle" type="range" min="5" max="60" value="30">
 </label>
 <label>ضریب اصطکاک ایستایی: <b id="sv">0.40</b>
@@ -33,12 +37,12 @@ button{padding:10px 22px;background:#1769c2;color:white;border:0;border-radius:8
 <label>ضریب اصطکاک جنبشی: <b id="kv">0.25</b>
 <input id="kineticF" type="range" min="0" max="80" value="25">
 </label>
-<label>جرم جسم: <b id="mv">2</b> کیلوگرم
+<label>جرم: <b id="mv">2</b> کیلوگرم
 <input id="mass" type="range" min="1" max="10" value="2">
 </label>
 </div>
 <div id="result"></div>
-<button id="reset">شروع دوباره آزمایش</button>
+<p><button id="reset">شروع دوباره</button></p>
 </main>
 <script>
 const c=document.getElementById('scene');
@@ -47,48 +51,79 @@ const angle=document.getElementById('angle');
 const sf=document.getElementById('staticF');
 const kf=document.getElementById('kineticF');
 const mass=document.getElementById('mass');
-let distance=0, speed=0, last=0, running=true;
-const g=9.8;
+let distance=0,speed=0,last=0;
+
+function arrow(x,y,dx,dy,color,label){
+ ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=3;
+ ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx,y+dy);ctx.stroke();
+ const a=Math.atan2(dy,dx),h=10;
+ ctx.beginPath();
+ ctx.moveTo(x+dx,y+dy);
+ ctx.lineTo(x+dx-h*Math.cos(a-0.45),y+dy-h*Math.sin(a-0.45));
+ ctx.lineTo(x+dx-h*Math.cos(a+0.45),y+dy-h*Math.sin(a+0.45));
+ ctx.closePath();ctx.fill();
+ ctx.font='bold 14px Tahoma';
+ ctx.fillText(label,x+dx+5,y+dy-5);
+}
+
 function draw(){
- const a=Number(angle.value)*Math.PI/180;
+ const deg=Number(angle.value);
+ const a=deg*Math.PI/180;
  const muS=Number(sf.value)/100;
  const muK=Number(kf.value)/100;
  const m=Number(mass.value);
- document.getElementById('av').textContent=angle.value;
+ const sliding=Math.tan(a)>muS;
+ const acc=sliding?9.8*(Math.sin(a)-muK*Math.cos(a)):0;
+
+ document.getElementById('av').textContent=deg;
  document.getElementById('sv').textContent=muS.toFixed(2);
  document.getElementById('kv').textContent=muK.toFixed(2);
  document.getElementById('mv').textContent=m;
+
  ctx.clearRect(0,0,c.width,c.height);
- const x0=95,y0=65,L=490;
+ const x0=85,y0=65,L=500;
  const x1=x0+L*Math.cos(a),y1=y0+L*Math.sin(a);
- ctx.lineWidth=7;ctx.strokeStyle='#536f8b';
+ ctx.strokeStyle='#536f8b';ctx.lineWidth=7;
  ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
  ctx.strokeStyle='#a9bfd4';ctx.lineWidth=2;
  ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0,y1);ctx.lineTo(x1,y1);ctx.stroke();
- ctx.fillStyle='#263d52';ctx.font='15px Tahoma';
- ctx.fillText('سطح شیب‌دار',350,35);
+
  const px=x0+distance*Math.cos(a);
  const py=y0+distance*Math.sin(a);
  ctx.save();ctx.translate(px,py);ctx.rotate(a);
  ctx.fillStyle='#e88b35';ctx.fillRect(-22,-28,44,28);
  ctx.strokeStyle='#8b4c18';ctx.lineWidth=2;ctx.strokeRect(-22,-28,44,28);
  ctx.restore();
- const sliding=Math.tan(a)>muS;
- const acc=sliding?g*(Math.sin(a)-muK*Math.cos(a)):0;
+
+ const cx=px,cy=py-14;
+ const scale=3.2*m;
+ arrow(cx,cy,0,scale*9.8,'#e53935','mg');
+ arrow(cx,cy,-Math.sin(a)*scale*9.8*Math.cos(a),
+ -Math.cos(a)*scale*9.8*Math.cos(a),'#16803c','N');
+
+ if(sliding){
+  arrow(cx,cy,-Math.cos(a)*scale*muK*9.8*Math.cos(a),
+  -Math.sin(a)*scale*muK*9.8*Math.cos(a),'#1769c2','fk');
+ }else{
+  arrow(cx,cy,-Math.cos(a)*scale*9.8*Math.sin(a),
+  -Math.sin(a)*scale*9.8*Math.sin(a),'#1769c2','fs');
+ }
+
  document.getElementById('result').innerHTML=
- 'شتاب گرانشی روی سطح: '+(g*Math.sin(a)).toFixed(2)+' m/s²<br>'+
- 'نیروی عمودی سطح: '+(m*g*Math.cos(a)).toFixed(2)+' N<br>'+
- 'شتاب حرکت جسم: '+Math.max(0,acc).toFixed(2)+' m/s²<br>'+
- (sliding?'وضعیت: جسم در حال لغزش است.':'وضعیت: جسم ساکن می‌ماند.');
+ 'وزن جسم: '+(m*9.8).toFixed(2)+' نیوتن<br>'+
+ 'نیروی عمودی سطح: '+(m*9.8*Math.cos(a)).toFixed(2)+' نیوتن<br>'+
+ 'شتاب روی سطح: '+Math.max(0,acc).toFixed(2)+' متر بر مجذور ثانیه<br>'+
+ (sliding?'وضعیت: جسم می‌لغزد.':'وضعیت: جسم ساکن است.');
 }
+
 function animate(t){
  if(!last)last=t;
  const dt=Math.min((t-last)/1000,0.04);
  last=t;
  const a=Number(angle.value)*Math.PI/180;
  const sliding=Math.tan(a)>Number(sf.value)/100;
- if(running&&sliding){
-  const acc=Math.max(0,g*(Math.sin(a)-Number(kf.value)/100*Math.cos(a)));
+ if(sliding){
+  const acc=Math.max(0,9.8*(Math.sin(a)-Number(kf.value)/100*Math.cos(a)));
   speed+=acc*dt;
   distance+=speed*dt*35;
   if(distance>480){distance=0;speed=0;}
@@ -100,7 +135,7 @@ angle.addEventListener('input',()=>{distance=0;speed=0;draw()});
 sf.addEventListener('input',()=>{distance=0;speed=0;draw()});
 kf.addEventListener('input',draw);
 mass.addEventListener('input',draw);
-document.getElementById('reset').addEventListener('click',()=>{distance=0;speed=0;running=true;draw()});
+document.getElementById('reset').addEventListener('click',()=>{distance=0;speed=0;draw()});
 draw();
 requestAnimationFrame(animate);
 </script>
