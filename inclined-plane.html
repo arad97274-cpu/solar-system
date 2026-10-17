@@ -4,60 +4,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>آزمایش سطح شیب‌دار</title>
+<title>آزمایش تعاملی سطح شیب‌دار</title>
 <style>
-body{font-family:Tahoma,Arial;background:#edf5ff;color:#183153;margin:0;padding:18px;text-align:center}
-main{max-width:650px;margin:auto;background:white;padding:18px;border-radius:16px;box-shadow:0 3px 14px #ccd7e5}
-h2{color:#1769aa}
-canvas{width:100%;max-width:500px;background:#f8fbff;border-radius:10px}
-label{display:block;text-align:right;margin-top:18px;font-weight:bold}
-input{width:100%;margin:10px 0}
-.result{background:#e7f5e9;padding:14px;border-radius:10px;line-height:2;margin-top:15px}
-button{padding:12px 22px;border:0;border-radius:8px;background:#1769aa;color:white;font-size:16px;cursor:pointer}
+body{font-family:Tahoma,Arial;background:#eef5ff;color:#17324d;text-align:center;margin:0;padding:16px}
+main{max-width:760px;margin:auto;background:white;padding:18px;border-radius:16px;box-shadow:0 3px 14px #bbc9da}
+h2{color:#1457a6}
+canvas{width:100%;max-width:680px;background:#f8fbff;border:1px solid #d5e2f2;border-radius:10px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;text-align:right;margin:16px 0}
+label{font-size:14px}
+input{width:100%;margin-top:8px}
+button{padding:10px 22px;background:#1769c2;color:white;border:0;border-radius:8px;font-size:16px}
+#result{background:#eaf4ff;padding:12px;border-radius:10px;line-height:2}
+@media(max-width:480px){.controls{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <main>
-<h2>آزمایش تعاملی سطح شیب‌دار</h2>
-<p>زاویه را تغییر دهید و شرط شروع لغزش جسم را بررسی کنید.</p>
-<canvas id="c" width="500" height="270"></canvas>
-<label>زاویهٔ سطح: <span id="av">20</span> درجه</label>
-<input id="a" type="range" min="0" max="60" value="20">
-<label>ضریب اصطکاک ایستایی μs: <span id="sv">0.40</span></label>
-<input id="s" type="range" min="0" max="100" value="40">
-<label>ضریب اصطکاک جنبشی μk: <span id="kv">0.25</span></label>
-<input id="k" type="range" min="0" max="100" value="25">
-<div class="result" id="r"></div>
-<button onclick="resetLab()">شروع دوباره</button>
+<h2>آزمایش سطح شیب‌دار</h2>
+<p>زاویه و اصطکاک را تغییر دهید و حرکت جسم را مشاهده کنید.</p>
+<canvas id="scene" width="680" height="360"></canvas>
+<div class="controls">
+<label>زاویه سطح: <b id="av">30</b> درجه
+<input id="angle" type="range" min="5" max="60" value="30">
+</label>
+<label>ضریب اصطکاک ایستایی: <b id="sv">0.40</b>
+<input id="staticF" type="range" min="0" max="100" value="40">
+</label>
+<label>ضریب اصطکاک جنبشی: <b id="kv">0.25</b>
+<input id="kineticF" type="range" min="0" max="80" value="25">
+</label>
+<label>جرم جسم: <b id="mv">2</b> کیلوگرم
+<input id="mass" type="range" min="1" max="10" value="2">
+</label>
+</div>
+<div id="result"></div>
+<button id="reset">شروع دوباره آزمایش</button>
 </main>
 <script>
-const a=document.getElementById('a'),s=document.getElementById('s'),k=document.getElementById('k');
+const c=document.getElementById('scene');
+const ctx=c.getContext('2d');
+const angle=document.getElementById('angle');
+const sf=document.getElementById('staticF');
+const kf=document.getElementById('kineticF');
+const mass=document.getElementById('mass');
+let distance=0, speed=0, last=0, running=true;
+const g=9.8;
 function draw(){
-const A=+a.value,S=+s.value/100,K=+k.value/100;
-const t=A*Math.PI/180;
-document.getElementById('av').textContent=A;
-document.getElementById('sv').textContent=S.toFixed(2);
-document.getElementById('kv').textContent=K.toFixed(2);
-const c=document.getElementById('c'),ctx=c.getContext('2d');
-ctx.clearRect(0,0,500,270);
-ctx.fillStyle='#f8fbff';ctx.fillRect(0,0,500,270);
-const x1=55,y1=220,x2=440,y2=220-385*Math.tan(t);
-ctx.strokeStyle='#4679a8';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-ctx.fillStyle='#e5a13a';
-ctx.save();ctx.translate(x1+190*Math.cos(t),y1-190*Math.sin(t));ctx.rotate(-t);
-ctx.fillRect(-22,-35,44,35);ctx.strokeStyle='#8a5a18';ctx.lineWidth=2;ctx.strokeRect(-22,-35,44,35);ctx.restore();
-ctx.fillStyle='#183153';ctx.font='16px Tahoma';ctx.fillText('θ = '+A+'°',65,250);
-const starts=Math.tan(t)>S;
-const acc=9.81*(Math.sin(t)-K*Math.cos(t));
-document.getElementById('r').innerHTML=
-'<b>وضعیت جسم:</b> '+(starts?'لغزش آغاز می‌شود':'جسم در حالت سکون می‌ماند')+'<br>'+
-'tan θ = '+Math.tan(t).toFixed(3)+'<br>'+
-'حداکثر اصطکاک ایستایی: μs cos θ = '+(S*Math.cos(t)).toFixed(3)+'<br>'+
-'شتاب در صورت لغزش: '+(starts?Math.max(0,acc).toFixed(2)+' m/s²':'۰ m/s²')+'<br>'+
-'<small>مدل ایده‌آل، بدون نیروی خارجی؛ شرط شروع لغزش: tan θ > μs</small>';
+ const a=Number(angle.value)*Math.PI/180;
+ const muS=Number(sf.value)/100;
+ const muK=Number(kf.value)/100;
+ const m=Number(mass.value);
+ document.getElementById('av').textContent=angle.value;
+ document.getElementById('sv').textContent=muS.toFixed(2);
+ document.getElementById('kv').textContent=muK.toFixed(2);
+ document.getElementById('mv').textContent=m;
+ ctx.clearRect(0,0,c.width,c.height);
+ const x0=95,y0=65,L=490;
+ const x1=x0+L*Math.cos(a),y1=y0+L*Math.sin(a);
+ ctx.lineWidth=7;ctx.strokeStyle='#536f8b';
+ ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
+ ctx.strokeStyle='#a9bfd4';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0,y1);ctx.lineTo(x1,y1);ctx.stroke();
+ ctx.fillStyle='#263d52';ctx.font='15px Tahoma';
+ ctx.fillText('سطح شیب‌دار',350,35);
+ const px=x0+distance*Math.cos(a);
+ const py=y0+distance*Math.sin(a);
+ ctx.save();ctx.translate(px,py);ctx.rotate(a);
+ ctx.fillStyle='#e88b35';ctx.fillRect(-22,-28,44,28);
+ ctx.strokeStyle='#8b4c18';ctx.lineWidth=2;ctx.strokeRect(-22,-28,44,28);
+ ctx.restore();
+ const sliding=Math.tan(a)>muS;
+ const acc=sliding?g*(Math.sin(a)-muK*Math.cos(a)):0;
+ document.getElementById('result').innerHTML=
+ 'شتاب گرانشی روی سطح: '+(g*Math.sin(a)).toFixed(2)+' m/s²<br>'+
+ 'نیروی عمودی سطح: '+(m*g*Math.cos(a)).toFixed(2)+' N<br>'+
+ 'شتاب حرکت جسم: '+Math.max(0,acc).toFixed(2)+' m/s²<br>'+
+ (sliding?'وضعیت: جسم در حال لغزش است.':'وضعیت: جسم ساکن می‌ماند.');
 }
-function resetLab(){a.value=20;s.value=40;k.value=25;draw()}
-[a,s,k].forEach(e=>e.addEventListener('input',draw));draw();
+function animate(t){
+ if(!last)last=t;
+ const dt=Math.min((t-last)/1000,0.04);
+ last=t;
+ const a=Number(angle.value)*Math.PI/180;
+ const sliding=Math.tan(a)>Number(sf.value)/100;
+ if(running&&sliding){
+  const acc=Math.max(0,g*(Math.sin(a)-Number(kf.value)/100*Math.cos(a)));
+  speed+=acc*dt;
+  distance+=speed*dt*35;
+  if(distance>480){distance=0;speed=0;}
+ }
+ draw();
+ requestAnimationFrame(animate);
+}
+angle.addEventListener('input',()=>{distance=0;speed=0;draw()});
+sf.addEventListener('input',()=>{distance=0;speed=0;draw()});
+kf.addEventListener('input',draw);
+mass.addEventListener('input',draw);
+document.getElementById('reset').addEventListener('click',()=>{distance=0;speed=0;running=true;draw()});
+draw();
+requestAnimationFrame(animate);
 </script>
 </body>
 </html>
