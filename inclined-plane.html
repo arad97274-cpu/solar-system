@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -98,11 +97,11 @@ function draw(){
  const cx=px,cy=py-14;
  const scale=3.2*m;
  arrow(cx,cy,0,scale*9.8,'#e53935','mg');
- arrow(cx,cy,-Math.sin(a)*scale*9.8*Math.cos(a),
+ arrow(cx,cy,Math.sin(a)*scale*9.8*Math.cos(a),
  -Math.cos(a)*scale*9.8*Math.cos(a),'#16803c','N');
 
  if(sliding){
-  arrow(cx,cy,-Math.cos(a)*scale*muK*9.8*Math.cos(a),
+  arrow(cx,cy,Math.cos(a)*scale*muK*9.8*Math.cos(a),
   -Math.sin(a)*scale*muK*9.8*Math.cos(a),'#1769c2','fk');
  }else{
   arrow(cx,cy,-Math.cos(a)*scale*9.8*Math.sin(a),
